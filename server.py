@@ -1,4 +1,5 @@
 print("🔥 VERSION NUEVA ACTIVA 🔥")
+
 from flask import Flask, request, jsonify
 import os
 import requests
@@ -18,6 +19,7 @@ def chat():
 
     fallback_reply = "No estoy segura... intenta otra vez."
 
+    # 🔴 comprobar API key
     if not API_KEY:
         print("❌ NO API KEY")
         return jsonify({"reply": fallback_reply})
@@ -27,14 +29,11 @@ def chat():
             "https://openrouter.ai/api/v1/chat/completions",
             headers={
                 "Authorization": f"Bearer {API_KEY}",
-                "Content-Type": "application/json",
-                "HTTP-Referer": "https://npc-ai",
-                "X-Title": "npc-ai"
+                "Content-Type": "application/json"
             },
             json={
                 "model": "meta-llama/llama-3-8b-instruct:free",
                 "messages": [
-                    {"role": "system", "content": "Responde breve y natural."},
                     {"role": "user", "content": user_message}
                 ],
                 "max_tokens": 60
@@ -42,14 +41,16 @@ def chat():
         )
 
         print("STATUS:", response.status_code)
-        print("RAW:", response.text)
+        print("RAW RESPONSE:", response.text)
 
+        # 🔴 si la API falla
         if response.status_code != 200:
             return jsonify({"reply": fallback_reply})
 
         result = response.json()
 
-        if "choices" in result:
+        # 🔴 validar respuesta
+        if "choices" in result and len(result["choices"]) > 0:
             reply = result["choices"][0]["message"]["content"]
         else:
             print("❌ ERROR IA:", result)
@@ -61,6 +62,7 @@ def chat():
 
     return jsonify({"reply": reply})
 
+# 🔥 necesario para Render
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
