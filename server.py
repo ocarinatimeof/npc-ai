@@ -4,13 +4,20 @@ import os
 
 app = Flask(__name__)
 
-# 🔑 API KEY desde Render
 API_KEY = os.environ.get("OPENROUTER_API_KEY")
+
+@app.route("/")
+def home():
+    return "Servidor activo"
 
 @app.route("/chat", methods=["POST"])
 def chat():
     data = request.json
     user_message = data.get("message", "")
+
+    # ❗ comprobar API key
+    if not API_KEY:
+        return jsonify({"reply": "Error: API key no configurada"})
 
     try:
         response = requests.post(
@@ -24,7 +31,7 @@ def chat():
                 "messages": [
                     {
                         "role": "system",
-                        "content": "Eres un asistente útil, claro, natural y breve. No hables como un robot."
+                        "content": "Eres un asistente útil, natural y breve."
                     },
                     {
                         "role": "user",
@@ -36,7 +43,13 @@ def chat():
 
         result = response.json()
 
-        # 🧠 respuesta IA
+        # 🔍 debug
+        print("API RESPONSE:", result)
+
+        # ❗ evitar crash si viene mal
+        if "choices" not in result:
+            return jsonify({"reply": "Error en la IA"})
+
         reply = result["choices"][0]["message"]["content"]
 
     except Exception as e:
