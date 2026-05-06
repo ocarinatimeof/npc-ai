@@ -18,7 +18,7 @@ def chat():
     fallback_reply = "No estoy segura... intenta otra vez."
 
     if not API_KEY:
-        print("ERROR: NO API KEY")
+        print("❌ NO API KEY")
         return jsonify({"reply": fallback_reply})
 
     try:
@@ -26,7 +26,9 @@ def chat():
             "https://openrouter.ai/api/v1/chat/completions",
             headers={
                 "Authorization": f"Bearer {API_KEY}",
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "HTTP-Referer": "https://npc-ai",
+                "X-Title": "npc-ai"
             },
             json={
                 "model": "meta-llama/llama-3-8b-instruct:free",
@@ -39,7 +41,7 @@ def chat():
         )
 
         print("STATUS:", response.status_code)
-        print("TEXT:", response.text[:200])  # 👈 MUY IMPORTANTE
+        print("RAW:", response.text)
 
         if response.status_code != 200:
             return jsonify({"reply": fallback_reply})
@@ -49,11 +51,11 @@ def chat():
         if "choices" in result:
             reply = result["choices"][0]["message"]["content"]
         else:
-            print("ERROR IA:", result)
+            print("❌ ERROR IA:", result)
             reply = fallback_reply
 
     except Exception as e:
-        print("EXCEPTION:", e)
+        print("❌ EXCEPTION:", e)
         reply = fallback_reply
 
     return jsonify({"reply": reply})
