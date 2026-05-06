@@ -28,30 +28,25 @@ def chat():
                 "Authorization": f"Bearer {API_KEY}",
                 "Content-Type": "application/json"
             },
-            json={  # ✅ ESTO VA DENTRO del post
-                "model": "mistralai/mistral-7b-instruct:free",
+            json={
+                "model": "meta-llama/llama-3-8b-instruct:free",
                 "messages": [
-                    {
-                        "role": "system",
-                        "content": """
-Hablas como una persona normal en un chat.
-Respondes breve, natural y sin sonar como asistente.
-"""
-                    },
-                    {
-                        "role": "user",
-                        "content": user_message
-                    }
+                    {"role": "system", "content": "Responde breve y natural."},
+                    {"role": "user", "content": user_message}
                 ],
-                "max_tokens": 60,
-                "temperature": 0.8
+                "max_tokens": 60
             }
-        )  # ✅ cerrar correctamente aquí
+        )
+
+        print("STATUS:", response.status_code)
+        print("TEXT:", response.text[:200])  # 👈 MUY IMPORTANTE
+
+        if response.status_code != 200:
+            return jsonify({"reply": fallback_reply})
 
         result = response.json()
-        print("API RESPONSE:", result)
 
-        if "choices" in result and len(result["choices"]) > 0:
+        if "choices" in result:
             reply = result["choices"][0]["message"]["content"]
         else:
             print("ERROR IA:", result)
