@@ -1,4 +1,4 @@
-print("🔥 VERSION FINAL IA 🔥")
+print("🔥 DEBUG TOTAL 🔥")
 
 from flask import Flask, request, jsonify
 import os
@@ -14,65 +14,55 @@ def home():
 
 @app.route("/chat", methods=["POST"])
 def chat():
-    print("💬 CHAT RECIBIDO")
+    print("---- NUEVA REQUEST ----")
 
     data = request.json
-    user_message = data.get("message", "")
+    print("DATA:", data)
 
+    user_message = data.get("message", "")
     print("MENSAJE:", user_message)
 
-    fallback_reply = "No sé qué decir..."
+    print("API_KEY EXISTE:", API_KEY is not None)
 
-    # ❌ sin API key
     if not API_KEY:
         print("❌ NO API KEY")
-        return jsonify({"reply": fallback_reply})
+        return jsonify({"reply": "NO API KEY"})
 
     try:
+        print("➡️ ENVIANDO A OPENROUTER")
+
         response = requests.post(
             "https://openrouter.ai/api/v1/chat/completions",
             headers={
                 "Authorization": f"Bearer {API_KEY}",
-                "Content-Type": "application/json",
-                "HTTP-Referer": "https://npc-ai",
-                "X-Title": "npc-ai"
+                "Content-Type": "application/json"
             },
             json={
-                "model": "openchat/openchat-3.5:free",
+                "model": "mistralai/mistral-7b-instruct:free",
                 "messages": [
-                    {
-                        "role": "system",
-                        "content": "Responde como una persona normal, breve y natural."
-                    },
                     {
                         "role": "user",
                         "content": user_message
                     }
-                ],
-                "max_tokens": 60,
-                "temperature": 0.8
+                ]
             }
         )
 
         print("STATUS:", response.status_code)
         print("RAW:", response.text)
 
-        if response.status_code != 200:
-            return jsonify({"reply": fallback_reply})
-
         result = response.json()
 
-        if "choices" in result and len(result["choices"]) > 0:
+        if "choices" in result:
             reply = result["choices"][0]["message"]["content"]
         else:
-            print("❌ ERROR IA:", result)
-            reply = fallback_reply
+            reply = "ERROR RESPUESTA IA"
+
+        return jsonify({"reply": reply})
 
     except Exception as e:
         print("❌ EXCEPTION:", e)
-        reply = fallback_reply
-
-    return jsonify({"reply": reply})
+        return jsonify({"reply": "ERROR INTERNO"})
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
