@@ -1,4 +1,4 @@
-print("🔥 IA FUNCIONANDO 🔥")
+print("🔥 GEMINI IA ACTIVA 🔥")
 
 from flask import Flask, request, jsonify
 import os
@@ -6,41 +6,45 @@ import requests
 
 app = Flask(__name__)
 
-API_KEY = os.environ.get("OPENROUTER_API_KEY")
+API_KEY = os.environ.get("GEMINI_API_KEY")
 
 @app.route("/")
 def home():
-    return "Servidor activo"
+    return "Servidor Gemini activo"
 
 @app.route("/chat", methods=["POST"])
 def chat():
+
     data = request.json
     user_message = data.get("message", "")
 
     if not API_KEY:
-        return jsonify({"reply": "NO API KEY"})
+        return jsonify({"reply": "No API Key"})
 
     try:
+
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={API_KEY}"
+
         response = requests.post(
-            "https://openrouter.ai/api/v1/chat/completions",
+            url,
             headers={
-                "Authorization": f"Bearer {API_KEY}",
                 "Content-Type": "application/json"
             },
             json={
-                "model": "meta-llama/llama-3-8b-instruct:free",
-                "messages": [
+                "contents": [
                     {
-                        "role": "system",
-                        "content": "Responde como una chica normal de Roblox, breve y natural."
-                    },
-                    {
-                        "role": "user",
-                        "content": user_message
+                        "parts": [
+                            {
+                                "text": f"""
+Responde como una chica normal de Roblox.
+Habla natural, breve y amigable.
+
+Usuario: {user_message}
+"""
+                            }
+                        ]
                     }
-                ],
-                "max_tokens": 60,
-                "temperature": 0.9
+                ]
             }
         )
 
@@ -48,14 +52,11 @@ def chat():
 
         print(result)
 
-        if "choices" in result:
-            reply = result["choices"][0]["message"]["content"]
-        else:
-            reply = "La IA no respondió."
+        reply = result["candidates"][0]["content"]["parts"][0]["text"]
 
     except Exception as e:
-        print(e)
-        reply = "Error interno."
+        print("ERROR:", e)
+        reply = "Error IA"
 
     return jsonify({"reply": reply})
 
