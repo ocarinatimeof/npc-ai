@@ -1,16 +1,21 @@
-print("🔥 GEMINI DEBUG 🔥")
+print("🔥 GEMINI OFICIAL 🔥")
 
 from flask import Flask, request, jsonify
+import google.generativeai as genai
 import os
-import requests
 
 app = Flask(__name__)
 
 API_KEY = os.environ.get("GEMINI_API_KEY")
 
+if API_KEY:
+    genai.configure(api_key=API_KEY)
+
+model = genai.GenerativeModel("gemini-1.5-flash")
+
 @app.route("/")
 def home():
-    return "Servidor Gemini activo"
+    return "Gemini funcionando"
 
 @app.route("/chat", methods=["POST"])
 def chat():
@@ -19,47 +24,31 @@ def chat():
     user_message = data.get("message", "")
 
     print("MENSAJE:", user_message)
-    print("API KEY EXISTE:", API_KEY is not None)
-
-    if not API_KEY:
-        return jsonify({"reply": "NO API KEY"})
 
     try:
 
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={API_KEY}"
+        response = model.generate_content(
+            f"""
+Responde como una chica normal de Roblox.
+Habla breve y natural.
 
-        print("URL:", url)
-
-        response = requests.post(
-            url,
-            headers={
-                "Content-Type": "application/json"
-            },
-            json={
-                "contents": [
-                    {
-                        "parts": [
-                            {
-                                "text": user_message
-                            }
-                        ]
-                    }
-                ]
-            }
+Usuario: {user_message}
+"""
         )
 
-        print("STATUS:", response.status_code)
-        print("RAW RESPONSE:", response.text)
+        print(response.text)
 
-        result = response.json()
-
-        reply = result["candidates"][0]["content"]["parts"][0]["text"]
+        return jsonify({
+            "reply": response.text
+        })
 
     except Exception as e:
-        print("ERROR REAL:", e)
-        reply = "ERROR IA"
 
-    return jsonify({"reply": reply})
+        print("ERROR:", e)
+
+        return jsonify({
+            "reply": "ERROR IA"
+        })
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
