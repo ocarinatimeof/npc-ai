@@ -1,4 +1,4 @@
-print("🔥 GEMINI IA ACTIVA 🔥")
+print("🔥 GEMINI DEBUG 🔥")
 
 from flask import Flask, request, jsonify
 import os
@@ -18,12 +18,17 @@ def chat():
     data = request.json
     user_message = data.get("message", "")
 
+    print("MENSAJE:", user_message)
+    print("API KEY EXISTE:", API_KEY is not None)
+
     if not API_KEY:
-        return jsonify({"reply": "No API Key"})
+        return jsonify({"reply": "NO API KEY"})
 
     try:
 
         url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={API_KEY}"
+
+        print("URL:", url)
 
         response = requests.post(
             url,
@@ -35,12 +40,7 @@ def chat():
                     {
                         "parts": [
                             {
-                                "text": f"""
-Responde como una chica normal de Roblox.
-Habla natural, breve y amigable.
-
-Usuario: {user_message}
-"""
+                                "text": user_message
                             }
                         ]
                     }
@@ -48,15 +48,16 @@ Usuario: {user_message}
             }
         )
 
-        result = response.json()
+        print("STATUS:", response.status_code)
+        print("RAW RESPONSE:", response.text)
 
-        print(result)
+        result = response.json()
 
         reply = result["candidates"][0]["content"]["parts"][0]["text"]
 
     except Exception as e:
-        print("ERROR:", e)
-        reply = "Error IA"
+        print("ERROR REAL:", e)
+        reply = "ERROR IA"
 
     return jsonify({"reply": reply})
 
